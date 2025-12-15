@@ -1,7 +1,23 @@
+# Gyakorló Cart - Teljes Projekt
+
+## 📋 Projekt Indítása
+
+### Backend és Frontend indítása
+
+```bash
 bash start.sh
 php artisan migrate:fresh --seed
+```
 
-ProductsStore.mjs:
+## 🛠️ Implementációs Lépések
+
+### 1. Products Store létrehozása
+
+Hozzunk létre egy új store-t a termékek kezelésére.
+
+**`ProductsStore.mjs`:**
+
+```javascript
 import { api } from '@utils/http.mjs';
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
@@ -19,13 +35,22 @@ export const useProducts = defineStore('products', () => {
 
     return {products, isLoading};
 });
+```
 
-/pages/index.vue:
+### 2. Products Store importálása
+
+**`/pages/index.vue`** - Import hozzáadása:
+
+```javascript
+import { useProducts } from '@stores/ProductsStore.mjs';
 const products = useProducts()
-+ import { useProducts } from '@stores/ProductsStore.mjs';
+```
 
-VAGY:
-http.mjs:
+### 3. HTTP Konfigurálás
+
+**Opció 1 - `http.mjs` módosítása:**
+
+```javascript
 import axios from 'axios'
 
 export const api = axios.create({
@@ -35,17 +60,30 @@ export const api = axios.create({
         "Content-Type": "application/json" 
     }
 })
+```
 
-VAGY:
-ENV ben kell állítani!
+**Opció 2 - Environment változók:**
 
+> ENV fájlban kell állítani a megfelelő API endpoint-ot!
+
+### 4. ShadCN Card komponens telepítése
+
+```bash
 docker compose exec frontend fish
 pnpm dlx shadcn-vue@latest add card
+```
 
-VAGY
+**Vagy:**
+
+```bash
 docker compose exec frontend pnpm dlx shadcn-vue@latest add card
+```
 
-/pages/index.vue:
+### 5. Termékek megjelenítése - Alap template
+
+**`/pages/index.vue`** - Kezdő sablon:
+
+```vue
 <template>
   <BaseLayout>
     <h1 class="text-6xl my-10">Termékek</h1>
@@ -54,9 +92,13 @@ docker compose exec frontend pnpm dlx shadcn-vue@latest add card
     </div>
   </BaseLayout>
 </template>
+```
 
-Ezután alakítjuk:
+### 6. Termékek megjelenítése - Card komponensekkel
 
+**`/pages/index.vue`** - Teljes implementáció:
+
+```vue
 <script setup>
 import BaseLayout from '@layouts/BaseLayout.vue'
 import { useCounter } from '@stores/CounterStore.mjs'
@@ -102,26 +144,35 @@ name: index
 meta:
   title: Főoldal
 </route>
+```
 
+### 7. Tesztelés
 
-Seeder,
-pma,
-vagy swaggerben átírni és tesztelni az értékeket, hogy mikor színezi ki!
+> **Fontos:** Seeder, phpMyAdmin vagy Swagger használatával módosítsd az árakat, hogy teszteld a piros színezést!
+> 
+> Legyen olyan termék, ami:
+> - Kisebb az árlimitnél
+> - Egyenlő az árlimittel  
+> - Nagyobb az árlimitnél
+>
+> 📸 Képernyőképen elég egy oldal az árakkal!
 
-Legyen olyan, ami kisebb, egyenlő, nagyobb, bármilyen...
+### 8. Button komponens telepítése
 
-Képernyőképen csak elég 1 az oldalról az árakkal!
-
-Ezután egy button telepítés:
+```bash
 docker compose exec frontend pnpm dlx shadcn-vue@latest add button
+```
 
-Gombot is megcsinálom:
+### 9. "Kosárba teszem" gomb hozzáadása
+
+**`/pages/index.vue`** - Frissített verzió gombbal:
+
+```vue
 <script setup>
 import BaseLayout from '@layouts/BaseLayout.vue'
 import { useCounter } from '@stores/CounterStore.mjs'
 import { useProducts } from '@stores/ProductsStore.mjs';
 import { Button } from "@/components/ui/button";
-
 
 import {
   Card,
@@ -166,14 +217,29 @@ name: index
 meta:
   title: Főoldal
 </route>
+```
 
+---
 
-Nagyjából ennyi a dolgozat! 😁
+## 🛒 Kosár Funkció Implementálása
 
-VISZONT MÉG VAN FELADAT:
-Másik komponens használata: sheet kosár használata:
+> **Nagyjából ennyi a dolgozat! 😁**
+> 
+> **DE VAN MÉG FELADAT!**
 
-/src/components/layout/BaseHeader.vue:
+### 10. Sheet komponens használata - Kosár megjelenítés
+
+#### Sheet komponens telepítése
+
+```bash
+docker compose exec frontend pnpm dlx shadcn-vue@latest add sheet
+```
+
+#### BaseHeader.vue módosítása
+
+**`/src/components/layout/BaseHeader.vue`** - Kosár gomb hozzáadása:
+
+```vue
 <script setup>
 import {
   NavigationMenu,
@@ -191,7 +257,6 @@ import {
 } from "@/components/ui/sheet"
 
 import { Button } from "@/components/ui/button"
-
 
 const title = import.meta.env.VITE_APP_NAME
 
@@ -276,15 +341,19 @@ const links = [
     </div>
   </header>
 </template>
+```
 
+### 11. Cart Store létrehozása
 
-Tárolni kell az elemeket a kosárba: mégegy store:
-CartStore.mjs:
+**`CartStore.mjs`:**
 
+```javascript
 import { defineStore } from "pinia";
+import { ref } from "vue";
 
 export const useCart = defineStore("cart", () => {
     const productsInCart = ref([]);
+    
     function addToCart(product){
         productsInCart.value.push(product);
     }
@@ -294,15 +363,19 @@ export const useCart = defineStore("cart", () => {
         addToCart,
     };
 });
+```
 
-Ezután index.vue:
+### 12. Kosárba rakás funkció - index.vue frissítése
+
+**`/pages/index.vue`** - Kosár funkcióval:
+
+```vue
 <script setup>
 import BaseLayout from '@layouts/BaseLayout.vue'
 import { useCounter } from '@stores/CounterStore.mjs'
 import { useProducts } from '@stores/ProductsStore.mjs';
 import { useCart } from '@stores/CartStore.mjs';
 import { Button } from "@/components/ui/button";
-
 
 import {
   Card,
@@ -348,7 +421,13 @@ name: index
 meta:
   title: Főoldal
 </route>
+```
 
+### 13. BaseHeader frissítése - Kosár megjelenítéssel
+
+**`/src/components/layout/BaseHeader.vue`** - Teljes verzió kosár tartalommal:
+
+```vue
 <script setup>
 import {
   NavigationMenu,
@@ -367,7 +446,6 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { useCart } from '@stores/CartStore.mjs'
-
 
 const title = import.meta.env.VITE_APP_NAME
 
@@ -457,16 +535,33 @@ const cart = useCart()
     </div>
   </header>
 </template>
+```
 
-Ne tűnjön el a kosárban az adat: pinia-plugin-persistedstate
-DOC: https://www.npmjs.com/package/pinia-plugin-persistedstate
+## 💾 Kosár Perzisztencia - Adatok megőrzése
 
-CartStore.mjs:
+### 14. Pinia Plugin Persistedstate
+
+**Ne tűnjön el a kosárban az adat újratöltés után!**
+
+📚 **Dokumentáció:** [pinia-plugin-persistedstate](https://www.npmjs.com/package/pinia-plugin-persistedstate)
+
+#### Telepítés
+
+```bash
+docker compose exec frontend pnpm add pinia-plugin-persistedstate
+```
+
+#### CartStore.mjs - Frissített verzió perzisztenciával
+
+**`CartStore.mjs`:**
+
+```javascript
 import { defineStore } from "pinia";
 import { ref } from "vue";
 
 export const useCart = defineStore("cart", () => {
     const productsInCart = ref([]);
+    
     function addToCart(product){
         productsInCart.value.push(product);
     }
@@ -476,7 +571,33 @@ export const useCart = defineStore("cart", () => {
         addToCart,
     };
 }, {
-    persist: true,
+    persist: true,  // 🔑 Ez biztosítja az adatok megőrzését!
 });
+```
 
-Új anyag! : Store, ami beállításokat tartalmaz. PL: nyelv, dark mode, témaváltás, lehet menteni pénznemet egy webshopban, stb...
+---
+
+## 📚 Új Anyag: Settings Store
+
+**Store beállítások tárolására**
+
+Használható:
+- 🌍 Nyelv váltás
+- 🌙 Dark mode
+- 🎨 Témaváltás
+- 💱 Pénznem mentése webshopban
+- És egyéb felhasználói beállítások...
+
+---
+
+## 🎯 Összefoglalás
+
+Ez a projekt bemutatja:
+- ✅ Pinia store használatát (Products, Cart, Settings)
+- ✅ ShadCN Vue komponensek integrálását
+- ✅ Dinamikus adatok megjelenítését
+- ✅ Kosár funkció implementálását
+- ✅ Adatok perzisztenciáját (localStorage)
+- ✅ Feltételes CSS osztályokat
+
+**Jó gyakorlást! 🚀**
